@@ -69,14 +69,26 @@ case "$OS" in
         ;;
 esac
 
-# Opsional: Menambahkan user saat ini ke grup docker agar bisa menjalankan docker tanpa sudo
-# Hati-hati: Ini memiliki implikasi keamanan. Logout dan login kembali diperlukan.
-read -p "Apakah Anda ingin menambahkan user saat ini ke grup Docker agar tidak perlu 'sudo'? (y/n): " add_user_to_group
+# Opsional: Menambahkan user non-root ke grup docker agar bisa menjalankan docker tanpa sudo
+# Hati-hati: Ini memiliki implikasi keamanan.
+read -p "Apakah Anda ingin menambahkan user Anda ke grup Docker agar tidak perlu 'sudo'? (y/n): " add_user_to_group
 if [[ "$add_user_to_group" == "y" || "$add_user_to_group" == "Y" ]]; then
-    CURRENT_USER=$(logname)
-    usermod -aG docker $CURRENT_USER
-    echo "User '$CURRENT_USER' telah ditambahkan ke grup docker."
-    echo "Anda perlu logout dan login kembali agar perubahan ini efektif."
+    # Deteksi user yang menjalankan sudo
+    if [ -n "$SUDO_USER" ]; then
+        USER_TO_ADD="$SUDO_USER"
+    else
+        # Fallback jika SUDO_USER tidak ada
+        USER_TO_ADD=$(logname)
+    fi
+
+    if [ -z "$USER_TO_ADD" ]; then
+        echo "Tidak dapat mendeteksi nama user Anda. Proses penambahan ke grup docker dilewati."
+    else
+        usermod -aG docker "$USER_TO_ADD"
+        echo "User '$USER_TO_ADD' telah ditambahkan ke grup docker."
+        echo "Agar perubahan ini efektif, Anda perlu logout dan login kembali,"
+        echo "atau jalankan perintah berikut di terminal Anda: newgrp docker"
+    fi
 fi
 
 echo ""
