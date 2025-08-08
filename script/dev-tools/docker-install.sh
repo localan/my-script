@@ -47,27 +47,32 @@ install_docker_rhel() {
 
 # --- Logika Utama Skrip ---
 
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$ID
+if command -v docker &> /dev/null; then
+    echo "✅ Docker sepertinya sudah terinstal. Melewati proses instalasi."
 else
-    echo "Tidak dapat mendeteksi distribusi Linux."
-    exit 1
-fi
-
-case "$OS" in
-    ubuntu|debian)
-        install_docker_debian
-        ;;
-    centos|rhel|fedora)
-        install_docker_rhel
-        ;;
-    *)
-        echo "Distribusi Linux '$OS' tidak didukung oleh skrip ini."
-        echo "Silakan lihat dokumentasi resmi Docker untuk instruksi instalasi manual."
+    echo "Docker tidak ditemukan. Memulai proses instalasi..."
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+    else
+        echo "Tidak dapat mendeteksi distribusi Linux."
         exit 1
-        ;;
-esac
+    fi
+
+    case "$OS" in
+        ubuntu|debian)
+            install_docker_debian
+            ;;
+        centos|rhel|fedora)
+            install_docker_rhel
+            ;;
+        *)
+            echo "Distribusi Linux '$OS' tidak didukung oleh skrip ini."
+            echo "Silakan lihat dokumentasi resmi Docker untuk instruksi instalasi manual."
+            exit 1
+            ;;
+    esac
+fi
 
 # Opsional: Menambahkan user non-root ke grup docker agar bisa menjalankan docker tanpa sudo
 # Hati-hati: Ini memiliki implikasi keamanan.
